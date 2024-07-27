@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
+	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -18,6 +21,17 @@ func (s *S3Client) DownloadFileFromCloudStorage(path string) (os.File, error) {
 	return os.File{}, nil
 }
 
-func NewStorageClient() StorageClient {
-	return &S3Client{}
+func NewStorageClient() (StorageClient, error) {
+	config, err := config.LoadDefaultConfig(context.TODO(), config.WithDefaultRegion(os.Getenv("S3_AWS_REGION")))
+
+	if err != nil {
+		log.Println("Error while creating the config for S3!", err.Error())
+		return &S3Client{}, err
+	}
+
+	s3Client := s3.NewFromConfig(config)
+
+	return &S3Client{
+		Client: s3Client,
+	}, nil
 }
